@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: "Tide — OpenReef Formation Registry",
   description:
     "Discover, share, and install multi-agent formations for the OpenReef ecosystem. Browse solo agents, shoals, and schools.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

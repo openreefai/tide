@@ -7,6 +7,8 @@ create table stars (
 );
 
 -- Embeddings for semantic search
+-- Note: pg_vector extension must be installed in the 'public' schema.
+-- In Supabase Dashboard: Database > Extensions > vector > Schema: public
 create extension if not exists vector;
 
 create table formation_embeddings (
