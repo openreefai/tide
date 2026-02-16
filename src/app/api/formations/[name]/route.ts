@@ -20,7 +20,7 @@ export async function GET(
     .single();
 
   if (error || !formation) {
-    return NextResponse.json({ error: 'Formation not found' }, { status: 404 });
+    return NextResponse.json({ error: 'Formation not found', debug: { code: error?.code, message: error?.message, details: error?.details, hint: error?.hint } }, { status: 404 });
   }
 
   const { count: stars } = await supabase
