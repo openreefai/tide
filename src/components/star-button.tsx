@@ -20,11 +20,7 @@ export default function StarButton({ formationName, initialStars }: StarButtonPr
       if (!user) return;
       setHasUser(true);
       // Check if user already starred this formation
-      fetch(`/api/formations/${formationName}`, { credentials: 'include' })
-        .then(() => {
-          // We check the user's stars list to see if this formation is starred
-          return fetch('/api/user/stars', { credentials: 'include' });
-        })
+      fetch('/api/user/stars', { credentials: 'include' })
         .then((res) => res.json())
         .then((data) => {
           if (data.stars) {

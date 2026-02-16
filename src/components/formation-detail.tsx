@@ -5,6 +5,7 @@ import TopologyGraph from '@/components/topology-graph';
 import CopyCommand from '@/components/copy-command';
 import StarButton from '@/components/star-button';
 import Link from 'next/link';
+import { typeBadgeClass, formatBytes, formatDate } from '@/lib/format';
 
 interface FormationVersion {
   version: string;
@@ -50,34 +51,6 @@ interface FormationDetailProps {
 
 type Tab = 'readme' | 'agents' | 'versions' | 'manifest';
 
-function typeBadgeClass(type: string): string {
-  switch (type) {
-    case 'solo':
-      return 'badge-solo';
-    case 'shoal':
-      return 'badge-shoal';
-    case 'school':
-      return 'badge-school';
-    default:
-      return 'bg-muted text-white';
-  }
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return 'Unknown';
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
 function renderReadme(readme: string): string {
   // Strip HTML tags to prevent XSS — formation README could contain arbitrary content
   const stripped = readme.replace(/<[^>]*>/g, '');
@@ -95,8 +68,13 @@ function renderReadme(readme: string): string {
     // Bold and italic
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    // Links
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-accent hover:text-accent-light underline" target="_blank" rel="noopener noreferrer">$1</a>')
+    // Links — only allow safe URL schemes to prevent XSS via javascript: URIs
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, text, url) => {
+      if (/^https?:\/\/|^mailto:/i.test(url)) {
+        return `<a href="${url}" class="text-accent hover:text-accent-light underline" target="_blank" rel="noopener noreferrer">${text}</a>`;
+      }
+      return text; // Strip the link, keep the text
+    })
     // Line breaks (double newline = paragraph)
     .replace(/\n\n/g, '</p><p class="my-3">')
     // Single newlines to <br>

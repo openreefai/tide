@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import CopyCommand from '@/components/copy-command';
 import Link from 'next/link';
+import { formatBytes, formatDate } from '@/lib/format';
 
 interface PageProps {
   params: Promise<{ name: string }>;
@@ -15,21 +16,6 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return 'Unknown';
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
 export default async function VersionsPage({ params }: PageProps) {
   const { name } = await params;
   const supabase = await createServerSupabaseClient();
@@ -38,6 +24,7 @@ export default async function VersionsPage({ params }: PageProps) {
     .from('formations')
     .select('id, name, latest_version')
     .eq('name', name)
+    .is('deleted_at', null)
     .single();
 
   if (!formation) {

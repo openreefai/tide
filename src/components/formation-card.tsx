@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { typeBadgeClass } from '@/lib/format';
 
 interface FormationCardProps {
   name: string;
@@ -7,19 +8,6 @@ interface FormationCardProps {
   latest_version: string | null;
   total_downloads: number;
   stars?: number;
-}
-
-function typeBadgeClass(type: string): string {
-  switch (type) {
-    case 'solo':
-      return 'badge-solo';
-    case 'shoal':
-      return 'badge-shoal';
-    case 'school':
-      return 'badge-school';
-    default:
-      return 'bg-muted text-white';
-  }
 }
 
 export default function FormationCard({
