@@ -25,7 +25,7 @@ export default async function FormationPage({ params }: PageProps) {
       id, name, description, type, license, homepage_url, repository_url,
       latest_version, total_downloads, created_at, updated_at,
       owner_id,
-      users(github_username, avatar_url, display_name)
+      users!formations_owner_id_fkey(github_username, avatar_url, display_name)
     `)
     .eq('name', name)
     .is('deleted_at', null)

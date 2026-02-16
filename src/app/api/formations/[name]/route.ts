@@ -14,13 +14,13 @@ export async function GET(
       id, name, description, type, license, homepage_url, repository_url,
       latest_version, total_downloads, created_at, updated_at,
       owner_id,
-      users(github_username, avatar_url, display_name)
+      users!formations_owner_id_fkey(github_username, avatar_url, display_name)
     `)
     .eq('name', name)
     .single();
 
   if (error || !formation) {
-    return NextResponse.json({ error: 'Formation not found', debug: { code: error?.code, message: error?.message, details: error?.details, hint: error?.hint } }, { status: 404 });
+    return NextResponse.json({ error: 'Formation not found' }, { status: 404 });
   }
 
   const { count: stars } = await supabase
