@@ -108,11 +108,15 @@ function UserMenu({ user }: { user: User }) {
 export default function Nav() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [authLoaded, setAuthLoaded] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user: u } }) => setUser(u));
+    supabase.auth.getUser().then(({ data: { user: u } }) => {
+      setUser(u);
+      setAuthLoaded(true);
+    });
 
     const {
       data: { subscription },
@@ -141,7 +145,9 @@ export default function Nav() {
             Publish
           </Link>
           <SearchForm className="w-64" />
-          {user ? (
+          {!authLoaded ? (
+            <div className="h-9 w-20 animate-pulse rounded-lg bg-surface-2" />
+          ) : user ? (
             <UserMenu user={user} />
           ) : (
             <Link
@@ -189,7 +195,9 @@ export default function Nav() {
           >
             Publish
           </Link>
-          {user ? (
+          {!authLoaded ? (
+            <div className="h-5 w-16 animate-pulse rounded bg-surface-2" />
+          ) : user ? (
             <>
               <Link
                 href="/dashboard"
