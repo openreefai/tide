@@ -7,8 +7,10 @@
   --border: #222;
   --surface: #111;
   --surface-2: #1a1a1a;
-  --accent: #0ea5e9;
-  --accent-light: #38bdf8;
+  --accent: #0891b2;
+  --accent-light: #22d3ee;
+  --accent-glow: rgba(8, 145, 178, 0.15);
+  --warm: #f97066;
 }
 
 @theme inline {
@@ -20,6 +22,8 @@
   --color-surface-2: var(--surface-2);
   --color-accent: var(--accent);
   --color-accent-light: var(--accent-light);
+  --color-accent-glow: var(--accent-glow);
+  --color-warm: var(--warm);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -79,4 +83,56 @@ code, pre, .font-mono {
 [class*="focus:ring"]:focus-visible,
 [class*="focus:border"]:focus-visible {
   outline: none;
+}
+
+/* Brand gradient text */
+.text-gradient-brand {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 50%, var(--warm) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hero atmosphere gradient mesh */
+.hero-atmosphere {
+  position: relative;
+}
+.hero-atmosphere::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 40%, rgba(8, 145, 178, 0.12), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 80% 60%, rgba(249, 112, 102, 0.06), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 1rem;
+}
+.hero-atmosphere > * { position: relative; z-index: 1; }
+
+/* Card entrance animation */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.card-entrance { animation: fadeSlideUp 0.3s ease-out both; }
+
+/* Star button bounce */
+@keyframes starBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+.star-bouncing svg { animation: starBounce 0.3s ease-out; }
+
+/* Topology graph */
+@keyframes dashflow {
+  to { stroke-dashoffset: -20; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .card-entrance { animation: none; opacity: 1; }
+  .star-bouncing svg { animation: none; }
+  .topology-edge-animated { animation: none !important; }
 }

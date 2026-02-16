@@ -15,6 +15,7 @@ export default function StarButton({ formationName, initialStars }: StarButtonPr
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [hasUser, setHasUser] = useState(false);
+  const [bouncing, setBouncing] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -43,6 +44,8 @@ export default function StarButton({ formationName, initialStars }: StarButtonPr
     }
 
     setLoading(true);
+    setBouncing(true);
+    setTimeout(() => setBouncing(false), 300);
 
     // Optimistic update
     const wasStarred = starred;
@@ -77,7 +80,7 @@ export default function StarButton({ formationName, initialStars }: StarButtonPr
         starred
           ? 'border-amber-500/50 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20'
           : 'border-border text-muted hover:border-muted hover:text-foreground'
-      } disabled:opacity-50${!loaded ? ' opacity-50' : ''}`}
+      } disabled:opacity-50${!loaded ? ' opacity-50' : ''}${bouncing ? ' star-bouncing' : ''}`}
     >
       <svg
         className="h-4 w-4"

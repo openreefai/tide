@@ -42,10 +42,10 @@ export default async function Home() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-16">
       {/* Hero */}
-      <section className="py-16 text-center">
+      <section className="hero-atmosphere overflow-hidden rounded-2xl py-16 text-center">
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
           Discover multi-agent{' '}
-          <span className="text-accent">formations</span>
+          <span className="text-gradient-brand">formations</span>
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-lg text-muted">
           Browse, share, and install reusable agent formations for the OpenReef
@@ -94,7 +94,7 @@ export default async function Home() {
           <div className="mt-1 text-sm text-muted">Formations</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold font-mono text-accent">
+          <div className="text-2xl font-bold font-mono text-warm">
             {totalDownloads.toLocaleString()}
           </div>
           <div className="mt-1 text-sm text-muted">Downloads</div>
@@ -115,15 +115,16 @@ export default async function Home() {
 
         {formations.length > 0 ? (
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {formations.map((f) => (
-              <FormationCard
-                key={f.name}
-                name={f.name}
-                description={f.description}
-                type={f.type}
-                latest_version={f.latest_version}
-                total_downloads={f.total_downloads}
-              />
+            {formations.map((f, i) => (
+              <div key={f.name} className="card-entrance" style={{ animationDelay: `${i * 50}ms` }}>
+                <FormationCard
+                  name={f.name}
+                  description={f.description}
+                  type={f.type}
+                  latest_version={f.latest_version}
+                  total_downloads={f.total_downloads}
+                />
+              </div>
             ))}
           </div>
         ) : (

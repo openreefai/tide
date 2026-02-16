@@ -178,57 +178,61 @@ export default function Nav() {
       </div>
 
       {/* Mobile menu */}
-      {mobileOpen && (
-        <div className="md:hidden border-t border-border bg-surface px-4 py-4 space-y-4">
-          <SearchForm className="w-full" />
-          <Link
-            href="/search"
-            className="block text-sm text-muted hover:text-foreground"
-            onClick={() => setMobileOpen(false)}
-          >
-            Explore
-          </Link>
-          <Link
-            href="/publish"
-            className="block text-sm text-muted hover:text-foreground"
-            onClick={() => setMobileOpen(false)}
-          >
-            Publish
-          </Link>
-          {!authLoaded ? (
-            <div className="h-5 w-16 animate-pulse rounded bg-surface-2" />
-          ) : user ? (
-            <>
-              <Link
-                href="/dashboard"
-                className="block text-sm text-muted hover:text-foreground"
-                onClick={() => setMobileOpen(false)}
-              >
-                Dashboard
-              </Link>
-              <button
-                onClick={async () => {
-                  const supabase = createClient();
-                  await supabase.auth.signOut();
-                  setMobileOpen(false);
-                  router.refresh();
-                }}
-                className="block w-full text-left text-sm text-muted hover:text-foreground"
-              >
-                Sign out
-              </button>
-            </>
-          ) : (
+      <div
+        className={`md:hidden border-t border-border bg-surface px-4 space-y-4 overflow-hidden transition-all duration-200 ${
+          mobileOpen ? 'max-h-80 opacity-100 py-4' : 'max-h-0 opacity-0 py-0'
+        }`}
+        aria-hidden={!mobileOpen}
+        inert={!mobileOpen ? true : undefined}
+      >
+        <SearchForm className="w-full" />
+        <Link
+          href="/search"
+          className="block text-sm text-muted hover:text-foreground"
+          onClick={() => setMobileOpen(false)}
+        >
+          Explore
+        </Link>
+        <Link
+          href="/publish"
+          className="block text-sm text-muted hover:text-foreground"
+          onClick={() => setMobileOpen(false)}
+        >
+          Publish
+        </Link>
+        {!authLoaded ? (
+          <div className="h-5 w-16 animate-pulse rounded bg-surface-2" />
+        ) : user ? (
+          <>
             <Link
-              href="/login"
-              className="block text-sm text-accent hover:text-accent-light"
+              href="/dashboard"
+              className="block text-sm text-muted hover:text-foreground"
               onClick={() => setMobileOpen(false)}
             >
-              Sign in
+              Dashboard
             </Link>
-          )}
-        </div>
-      )}
+            <button
+              onClick={async () => {
+                const supabase = createClient();
+                await supabase.auth.signOut();
+                setMobileOpen(false);
+                router.refresh();
+              }}
+              className="block w-full text-left text-sm text-muted hover:text-foreground"
+            >
+              Sign out
+            </button>
+          </>
+        ) : (
+          <Link
+            href="/login"
+            className="block text-sm text-accent hover:text-accent-light"
+            onClick={() => setMobileOpen(false)}
+          >
+            Sign in
+          </Link>
+        )}
+      </div>
     </nav>
   );
 }

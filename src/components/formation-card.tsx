@@ -1,6 +1,12 @@
 import Link from 'next/link';
 import { typeBadgeClass } from '@/lib/format';
 
+const typeBorderColor: Record<string, string> = {
+  solo: '#0891b2',
+  shoal: '#8b5cf6',
+  school: '#f59e0b',
+};
+
 interface FormationCardProps {
   name: string;
   description: string;
@@ -21,7 +27,8 @@ export default function FormationCard({
   return (
     <Link
       href={`/formations/${name}`}
-      className="group block rounded-lg border border-border bg-surface p-5 transition-all hover:border-accent/50 hover:bg-surface-2"
+      className="group block rounded-lg border border-border bg-surface p-5 transition-all hover:border-accent/50 hover:bg-surface-2 hover:-translate-y-0.5 hover:shadow-[0_4px_24px_var(--accent-glow)]"
+      style={{ borderLeftWidth: '3px', borderLeftColor: typeBorderColor[type] ?? 'var(--border)' }}
     >
       <div className="flex items-start justify-between gap-3">
         <h3 className="font-mono text-base font-semibold text-accent-light group-hover:text-accent">

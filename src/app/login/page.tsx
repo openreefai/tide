@@ -14,11 +14,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-[80vh] items-center justify-center px-4">
+    <div className="hero-atmosphere flex min-h-[80vh] items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="rounded-xl border border-border bg-surface p-8 text-center">
+        <div className="rounded-xl border border-border bg-surface p-8 text-center shadow-[0_0_40px_var(--accent-glow)]">
           <div className="text-3xl font-bold font-mono">
-            <span className="text-accent">~</span>tide
+            <span className="text-gradient-brand">~</span>tide
           </div>
           <p className="mt-3 text-sm text-muted">
             Sign in to publish formations, manage tokens, and star your favorites.

@@ -155,15 +155,16 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       {/* Results grid */}
       {formations.length > 0 ? (
         <div className="mt-6 grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))]">
-          {formations.map((f) => (
-            <FormationCard
-              key={f.name}
-              name={f.name}
-              description={f.description}
-              type={f.type}
-              latest_version={f.latest_version}
-              total_downloads={f.total_downloads}
-            />
+          {formations.map((f, i) => (
+            <div key={f.name} className="card-entrance" style={{ animationDelay: `${i * 50}ms` }}>
+              <FormationCard
+                name={f.name}
+                description={f.description}
+                type={f.type}
+                latest_version={f.latest_version}
+                total_downloads={f.total_downloads}
+              />
+            </div>
           ))}
         </div>
       ) : (
