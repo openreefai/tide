@@ -62,7 +62,7 @@ npm run dev
 
 ### Database migrations
 
-13 migrations in `supabase/migrations/`:
+14 migrations in `supabase/migrations/`:
 
 | Migration | Purpose |
 |-----------|---------|
@@ -79,6 +79,7 @@ npm run dev
 | 011 | Semantic search support in star-sorted listings |
 | 012 | Harden user trigger (multi-key fallback, ON CONFLICT, exception handler) |
 | 013 | Wire repository_url through publish_claim, publish_finalize, and unpublish_version RPCs |
+| 014 | Fix publish_claim record null check (IS NOT NULL -> FOUND) |
 
 ### Deploy to production
 
