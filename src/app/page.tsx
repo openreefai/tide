@@ -45,7 +45,7 @@ export default async function Home() {
       <section className="hero-atmosphere overflow-hidden rounded-2xl py-16 text-center">
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
           Discover multi-agent{' '}
-          <span className="text-gradient-brand">formations</span>
+          <span className="text-accent">formations</span>
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-lg text-muted">
           Browse, share, and install reusable agent formations for the OpenReef
