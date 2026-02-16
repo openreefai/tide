@@ -120,7 +120,7 @@ export async function publishFormation(input: PublishInput) {
     const versionsForCompute = (allVersions ?? []).map((v) =>
       v.version === version ? { ...v, status: 'published' } : v,
     );
-    const publishedCount = versionsForCompute.filter((v) => v.status === 'published').length;
+    const publishedCount = (allVersions ?? []).filter((v) => v.status === 'published').length;
     const latest = computeLatestVersion(versionsForCompute);
     const isNewLatest = latest === version;
 
