@@ -37,26 +37,30 @@ export default function PublishGuidePage() {
           </p>
           <pre className="mt-4 rounded-lg border border-border bg-surface p-4 overflow-x-auto">
             <code className="text-sm text-foreground">{`{
+  "reef": "1.0",
   "name": "my-formation",
   "version": "1.0.0",
   "description": "A multi-agent workflow for...",
   "type": "shoal",
+  "namespace": "my-formation",
   "license": "MIT",
-  "agents": [
-    {
-      "name": "planner",
+  "agents": {
+    "planner": {
+      "source": "./agents/planner",
+      "description": "Plans and coordinates tasks",
       "model": "claude-sonnet",
-      "role": "Plans and coordinates tasks"
+      "role": "coordinator"
     },
-    {
-      "name": "executor",
+    "executor": {
+      "source": "./agents/executor",
+      "description": "Executes planned tasks",
       "model": "claude-haiku",
-      "role": "Executes planned tasks"
+      "role": "worker"
     }
-  ],
-  "agentToAgent": [
-    { "from": "planner", "to": "executor", "channel": "tasks" }
-  ]
+  },
+  "agentToAgent": {
+    "planner": ["executor"]
+  }
 }`}</code>
           </pre>
         </div>

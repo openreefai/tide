@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import TopologyGraph from '@/components/topology-graph';
@@ -59,7 +59,18 @@ export default function FormationDetail({
   versions,
   reefJson,
 }: FormationDetailProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('readme');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const tabParam = searchParams.get('tab') as Tab | null;
+  const validTabs: Tab[] = ['readme', 'agents', 'versions', 'manifest'];
+  const activeTab = tabParam && validTabs.includes(tabParam) ? tabParam : 'readme';
+
+  function setActiveTab(tab: Tab) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === 'readme') params.delete('tab');
+    else params.set('tab', tab);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }
 
   const rawAgents = reefJson?.agents;
   const agents: Array<{ name: string; model?: string; role?: string }> = rawAgents

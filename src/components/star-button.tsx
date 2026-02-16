@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 
 interface StarButtonProps {
@@ -12,25 +13,26 @@ export default function StarButton({ formationName, initialStars }: StarButtonPr
   const [starred, setStarred] = useState(false);
   const [starCount, setStarCount] = useState(initialStars);
   const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [hasUser, setHasUser] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return;
+      if (!user) {
+        setLoaded(true);
+        return;
+      }
       setHasUser(true);
-      // Check if user already starred this formation
-      fetch('/api/user/stars', { credentials: 'include' })
+      fetch(`/api/user/stars/${encodeURIComponent(formationName)}`, { credentials: 'include' })
         .then((res) => res.json())
         .then((data) => {
-          if (data.stars) {
-            const isStarred = data.stars.some(
-              (s: { formations: { name: string } | null }) => s.formations?.name === formationName,
-            );
-            setStarred(isStarred);
-          }
+          setStarred(!!data.starred);
+          setLoaded(true);
         })
-        .catch(() => {});
+        .catch(() => {
+          setLoaded(true);
+        });
     });
   }, [formationName]);
 
@@ -54,14 +56,14 @@ export default function StarButton({ formationName, initialStars }: StarButtonPr
       });
 
       if (!res.ok) {
-        // Revert on error
         setStarred(wasStarred);
         setStarCount((prev) => prev + (wasStarred ? 1 : -1));
+        toast.error('Failed to update star');
       }
     } catch {
-      // Revert on error
       setStarred(wasStarred);
       setStarCount((prev) => prev + (wasStarred ? 1 : -1));
+      toast.error('Failed to update star');
     } finally {
       setLoading(false);
     }
@@ -75,7 +77,7 @@ export default function StarButton({ formationName, initialStars }: StarButtonPr
         starred
           ? 'border-amber-500/50 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20'
           : 'border-border text-muted hover:border-muted hover:text-foreground'
-      } disabled:opacity-50`}
+      } disabled:opacity-50${!loaded ? ' opacity-50' : ''}`}
     >
       <svg
         className="h-4 w-4"

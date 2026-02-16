@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { listFormationsByStars } from '@/lib/queries';
 import FormationCard from '@/components/formation-card';
 import SearchBar from '@/components/search-bar';
 import Link from 'next/link';
@@ -34,34 +35,46 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   try {
     const supabase = await createServerSupabaseClient();
 
-    let query = supabase
-      .from('formations')
-      .select('name, description, type, latest_version, total_downloads', { count: 'exact' })
-      .is('deleted_at', null);
+    if (currentSort === 'stars') {
+      const sanitized = q ? q.replace(/[^a-zA-Z0-9\s\-]/g, '') : null;
+      const result = await listFormationsByStars(supabase, {
+        type: currentType || null,
+        query: sanitized,
+        limit: ITEMS_PER_PAGE,
+        offset: (currentPage - 1) * ITEMS_PER_PAGE,
+      });
+      formations = result.formations;
+      total = result.total;
+    } else {
+      let query = supabase
+        .from('formations')
+        .select('name, description, type, latest_version, total_downloads', { count: 'exact' })
+        .is('deleted_at', null);
 
-    if (currentType) {
-      query = query.eq('type', currentType);
+      if (currentType) {
+        query = query.eq('type', currentType);
+      }
+
+      if (q) {
+        const sanitized = q.replace(/[^a-zA-Z0-9\s\-]/g, '');
+        query = query.or(`name.ilike.%${sanitized}%,description.ilike.%${sanitized}%`);
+      }
+
+      switch (currentSort) {
+        case 'downloads':
+          query = query.order('total_downloads', { ascending: false });
+          break;
+        default:
+          query = query.order('created_at', { ascending: false });
+      }
+
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      query = query.range(from, from + ITEMS_PER_PAGE - 1);
+
+      const { data, count } = await query;
+      formations = data ?? [];
+      total = count ?? 0;
     }
-
-    if (q) {
-      const sanitized = q.replace(/[^a-zA-Z0-9\s\-]/g, '');
-      query = query.or(`name.ilike.%${sanitized}%,description.ilike.%${sanitized}%`);
-    }
-
-    switch (currentSort) {
-      case 'downloads':
-        query = query.order('total_downloads', { ascending: false });
-        break;
-      default:
-        query = query.order('created_at', { ascending: false });
-    }
-
-    const from = (currentPage - 1) * ITEMS_PER_PAGE;
-    query = query.range(from, from + ITEMS_PER_PAGE - 1);
-
-    const { data, count } = await query;
-    formations = data ?? [];
-    total = count ?? 0;
   } catch {
     // Supabase unavailable
   }
@@ -83,6 +96,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const sorts = [
     { value: 'newest', label: 'Newest' },
     { value: 'downloads', label: 'Most downloads' },
+    { value: 'stars', label: 'Most starred' },
   ] as const;
 
   return (
@@ -140,7 +154,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
       {/* Results grid */}
       {formations.length > 0 ? (
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))]">
           {formations.map((f) => (
             <FormationCard
               key={f.name}

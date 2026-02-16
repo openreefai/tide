@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface CopyCommandProps {
   command: string;
@@ -15,7 +16,7 @@ export default function CopyCommand({ command }: CopyCommandProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard API not available
+      toast.error('Could not copy to clipboard');
     }
   }
 

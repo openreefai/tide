@@ -106,6 +106,7 @@ function UserMenu({ user }: { user: User }) {
 }
 
 export default function Nav() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -189,13 +190,26 @@ export default function Nav() {
             Publish
           </Link>
           {user ? (
-            <Link
-              href="/dashboard"
-              className="block text-sm text-muted hover:text-foreground"
-              onClick={() => setMobileOpen(false)}
-            >
-              Dashboard
-            </Link>
+            <>
+              <Link
+                href="/dashboard"
+                className="block text-sm text-muted hover:text-foreground"
+                onClick={() => setMobileOpen(false)}
+              >
+                Dashboard
+              </Link>
+              <button
+                onClick={async () => {
+                  const supabase = createClient();
+                  await supabase.auth.signOut();
+                  setMobileOpen(false);
+                  router.refresh();
+                }}
+                className="block w-full text-left text-sm text-muted hover:text-foreground"
+              >
+                Sign out
+              </button>
+            </>
           ) : (
             <Link
               href="/login"

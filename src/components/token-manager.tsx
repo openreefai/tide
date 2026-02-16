@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { createToken, deleteToken, fetchActiveToken } from '@/app/dashboard/actions';
 
 export default function TokenManager() {
@@ -14,7 +15,7 @@ export default function TokenManager() {
   useEffect(() => {
     fetchActiveToken()
       .then((data) => setActiveToken(data))
-      .catch(() => {})
+      .catch(() => toast.error('Failed to load token'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -25,7 +26,7 @@ export default function TokenManager() {
       setNewToken(result.token);
       setActiveToken({ prefix: result.prefix, createdAt: new Date().toISOString() });
     } catch {
-      // Error generating token
+      toast.error('Failed to generate token');
     } finally {
       setActionLoading(false);
     }
@@ -39,7 +40,7 @@ export default function TokenManager() {
       setNewToken(null);
       setShowRevokeConfirm(false);
     } catch {
-      // Error revoking token
+      toast.error('Failed to revoke token');
     } finally {
       setActionLoading(false);
     }
@@ -52,7 +53,7 @@ export default function TokenManager() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard API unavailable
+      toast.error('Could not copy to clipboard');
     }
   }
 
