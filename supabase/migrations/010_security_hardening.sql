@@ -31,23 +31,24 @@
 -- =============================================================================
 
 -- Transaction functions (publish/unpublish workflow)
+-- Revoke from PUBLIC (which anon and authenticated inherit from by default)
 revoke execute on function publish_claim(
   uuid, text, uuid, text, text, text, text, text, jsonb, text, int, int, boolean
-) from anon, authenticated;
+) from public;
 
 revoke execute on function publish_finalize(
   uuid, text, text, boolean, int, text, text, text
-) from anon, authenticated;
+) from public;
 
 revoke execute on function unpublish_version(
   uuid, text, text, int, text, text, text
-) from anon, authenticated;
+) from public;
 
 -- Download counter (called by API route via admin/service-role client)
-revoke execute on function increment_downloads(text) from anon, authenticated;
+revoke execute on function increment_downloads(text) from public;
 
 -- Embedding upsert (called by API route via admin/service-role client)
-revoke execute on function upsert_formation_embedding(uuid, float8[]) from anon, authenticated;
+revoke execute on function upsert_formation_embedding(uuid, float8[]) from public;
 
 
 -- =============================================================================

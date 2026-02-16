@@ -41,13 +41,14 @@ export async function GET(request: NextRequest) {
   }
 
   if (sort === 'stars') {
+    // If semantic search found matches, pass them as a comma-separated list
+    // for the RPC to filter on (instead of raw text search via p_query).
+    const rpcParams = semanticMatchNames
+      ? { p_type: type ?? null, p_query: null, p_names: semanticMatchNames, p_limit: limit, p_offset: (page - 1) * limit }
+      : { p_type: type ?? null, p_query: q ?? null, p_names: null, p_limit: limit, p_offset: (page - 1) * limit };
+
     const { data, error: rpcErr } = await supabase
-      .rpc('list_formations_by_stars', {
-        p_type: type ?? null,
-        p_query: q ?? null,
-        p_limit: limit,
-        p_offset: (page - 1) * limit,
-      });
+      .rpc('list_formations_by_stars', rpcParams);
     if (rpcErr) return NextResponse.json({ error: rpcErr.message }, { status: 500 });
     const rows = data ?? [];
     let total = rows.length > 0 ? Number(rows[0].total_count) : 0;
@@ -56,12 +57,7 @@ export async function GET(request: NextRequest) {
     // Fetch the real count so pagination UI stays correct.
     if (rows.length === 0 && (page - 1) * limit > 0) {
       const { data: countData } = await supabase
-        .rpc('list_formations_by_stars', {
-          p_type: type ?? null,
-          p_query: q ?? null,
-          p_limit: 1,
-          p_offset: 0,
-        });
+        .rpc('list_formations_by_stars', { ...rpcParams, p_limit: 1, p_offset: 0 });
       total = (countData && countData.length > 0) ? Number(countData[0].total_count) : 0;
     }
 
