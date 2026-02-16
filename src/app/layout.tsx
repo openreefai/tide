@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import { Geist, Geist_Mono } from "next/font/google";
 import Nav from "@/components/nav";
 import "./globals.css";
@@ -35,6 +36,7 @@ export default function RootLayout({
         <Nav />
         <main className="min-h-screen">{children}</main>
       </body>
+      <GoogleAnalytics gaId="G-X722JV1KD0" />
     </html>
   );
 }
