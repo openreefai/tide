@@ -50,6 +50,25 @@ revoke execute on function increment_downloads(text) from public;
 -- Embedding upsert (called by API route via admin/service-role client)
 revoke execute on function upsert_formation_embedding(uuid, float8[]) from public;
 
+-- Explicitly grant back to service_role so the admin client can still call them.
+-- REVOKE FROM public removes the default grant that all roles (including
+-- service_role) inherit. Without this re-grant, service-role RPC calls would fail.
+grant execute on function publish_claim(
+  uuid, text, uuid, text, text, text, text, text, jsonb, text, int, int, boolean
+) to service_role;
+
+grant execute on function publish_finalize(
+  uuid, text, text, boolean, int, text, text, text
+) to service_role;
+
+grant execute on function unpublish_version(
+  uuid, text, text, int, text, text, text
+) to service_role;
+
+grant execute on function increment_downloads(text) to service_role;
+
+grant execute on function upsert_formation_embedding(uuid, float8[]) to service_role;
+
 
 -- =============================================================================
 -- 2. In-function defense-in-depth: verify service_role caller
