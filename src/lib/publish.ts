@@ -95,81 +95,88 @@ export async function publishFormation(input: PublishInput) {
   const isNewFormation = claimResult.is_new as boolean;
   const actualPath = claimResult.tarball_path as string;
 
-  // --- External: upload tarball ---
+  // --- Upload + finalize with unified compensation ---
+  // If any step after claim fails, best-effort clean up all resources.
+  // The cleanup cron handles stale 'publishing' versions as a safety net,
+  // so this compensation is defense-in-depth and failure is acceptable.
+  let tarballUploaded = false;
   try {
+    // --- External: upload tarball ---
     await uploadTarball(actualPath, tarball);
+    tarballUploaded = true;
+
+    // --- Compute latest + finalize (with optimistic concurrency) ---
+    let finalizeErr: { message: string } | null = null;
+    let isNewLatest = false;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { data: allVersions } = await admin
+        .from('formation_versions')
+        .select('version, status, is_prerelease')
+        .eq('formation_id', formationId);
+
+      const versionsForCompute = (allVersions ?? []).map((v) =>
+        v.version === version ? { ...v, status: 'published' } : v,
+      );
+      const publishedCount = (allVersions ?? []).filter((v) => v.status === 'published').length;
+      const latest = computeLatestVersion(versionsForCompute);
+      isNewLatest = latest === version;
+
+      const result = await admin.rpc('publish_finalize', {
+        p_formation_id: formationId,
+        p_version: version,
+        p_latest_version: latest,
+        p_is_new_latest: isNewLatest,
+        p_expected_version_count: publishedCount,
+        p_description: isNewLatest ? ((reefJson.description as string) ?? '') : null,
+        p_type: isNewLatest ? ((reefJson.type as string) ?? 'solo') : null,
+        p_license: isNewLatest ? ((reefJson.license as string) ?? null) : null,
+      });
+
+      if (result.error?.message?.includes('CONCURRENT_MODIFY') && attempt < 2) {
+        continue;
+      }
+      finalizeErr = result.error;
+      break;
+    }
+
+    if (finalizeErr) {
+      throw new Error(`Finalize failed: ${finalizeErr.message}`);
+    }
+
+    // Generate embedding for semantic search (best-effort — don't block publish)
+    if (isNewLatest) {
+      await refreshFormationEmbedding(
+        formationId,
+        (reefJson.description as string) ?? '',
+        readme,
+      ).catch(() => {});
+    }
+
+    return {
+      ok: true,
+      name: canonical,
+      version,
+      url: `https://tide.openreef.ai/formations/${canonical}`,
+    };
   } catch (err) {
-    // Compensation
+    // Best-effort compensation: mark version as failed and clean up resources
     await admin.from('formation_versions')
       .update({ status: 'failed' })
       .eq('formation_id', formationId)
-      .eq('version', version);
+      .eq('version', version)
+      .then(() => {}, () => {});
+
     if (isNewFormation) {
-      await admin.from('formations').update({ deleted_at: new Date().toISOString() }).eq('id', formationId);
+      await admin.from('formations')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', formationId)
+        .then(() => {}, () => {});
     }
+
+    if (tarballUploaded) {
+      await deleteTarball(actualPath).catch(() => {});
+    }
+
     throw err;
   }
-
-  // --- Compute latest + finalize (with optimistic concurrency) ---
-  let finalizeErr: { message: string } | null = null;
-  let isNewLatest = false;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const { data: allVersions } = await admin
-      .from('formation_versions')
-      .select('version, status, is_prerelease')
-      .eq('formation_id', formationId);
-
-    const versionsForCompute = (allVersions ?? []).map((v) =>
-      v.version === version ? { ...v, status: 'published' } : v,
-    );
-    const publishedCount = (allVersions ?? []).filter((v) => v.status === 'published').length;
-    const latest = computeLatestVersion(versionsForCompute);
-    isNewLatest = latest === version;
-
-    const result = await admin.rpc('publish_finalize', {
-      p_formation_id: formationId,
-      p_version: version,
-      p_latest_version: latest,
-      p_is_new_latest: isNewLatest,
-      p_expected_version_count: publishedCount,
-      p_description: isNewLatest ? ((reefJson.description as string) ?? '') : null,
-      p_type: isNewLatest ? ((reefJson.type as string) ?? 'solo') : null,
-      p_license: isNewLatest ? ((reefJson.license as string) ?? null) : null,
-    });
-
-    if (result.error?.message?.includes('CONCURRENT_MODIFY') && attempt < 2) {
-      continue;
-    }
-    finalizeErr = result.error;
-    break;
-  }
-
-  if (finalizeErr) {
-    // Compensation
-    await admin.from('formation_versions')
-      .update({ status: 'failed' })
-      .eq('formation_id', formationId)
-      .eq('version', version);
-    if (isNewFormation) {
-      await admin.from('formations').update({ deleted_at: new Date().toISOString() }).eq('id', formationId);
-    }
-    await deleteTarball(actualPath).catch(() => {});
-    throw new Error(`Finalize failed: ${finalizeErr.message}`);
-  }
-
-  // Generate embedding for semantic search (best-effort — don't block publish)
-  if (isNewLatest) {
-    await refreshFormationEmbedding(
-      formationId,
-      (reefJson.description as string) ?? '',
-      readme,
-    ).catch(() => {});
-  }
-
-  return {
-    ok: true,
-    name: canonical,
-    version,
-    url: `https://tide.openreef.ai/formations/${canonical}`,
-  };
 }
