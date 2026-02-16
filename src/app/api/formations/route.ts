@@ -9,6 +9,22 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get('type');
   const q = searchParams.get('q');
 
+  // If semantic search is available (OPENAI_API_KEY set), use it for text queries
+  if (q && process.env.OPENAI_API_KEY) {
+    try {
+      const { semanticSearch } = await import('@/lib/search');
+      const results = await semanticSearch(q, limit);
+      return NextResponse.json({
+        formations: results,
+        total: results.length,
+        page: 1,
+        limit,
+      });
+    } catch {
+      // Fall through to text search if semantic search fails
+    }
+  }
+
   const supabase = await createServerSupabaseClient();
   let query = supabase
     .from('formations')

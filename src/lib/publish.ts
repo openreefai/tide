@@ -6,6 +6,7 @@ import { uploadTarball, deleteTarball } from '@/lib/storage';
 import { canonicalizeName, validateName, checkNearDuplicate } from '@/lib/names';
 import { computeLatestVersion } from '@/lib/versions';
 import { extractTarballContents } from '@/lib/tarball';
+import { refreshFormationEmbedding } from '@/lib/embeddings';
 
 const MAX_TARBALL_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -111,6 +112,7 @@ export async function publishFormation(input: PublishInput) {
 
   // --- Compute latest + finalize (with optimistic concurrency) ---
   let finalizeErr: { message: string } | null = null;
+  let isNewLatest = false;
   for (let attempt = 0; attempt < 3; attempt++) {
     const { data: allVersions } = await admin
       .from('formation_versions')
@@ -122,7 +124,7 @@ export async function publishFormation(input: PublishInput) {
     );
     const publishedCount = (allVersions ?? []).filter((v) => v.status === 'published').length;
     const latest = computeLatestVersion(versionsForCompute);
-    const isNewLatest = latest === version;
+    isNewLatest = latest === version;
 
     const result = await admin.rpc('publish_finalize', {
       p_formation_id: formationId,
@@ -153,6 +155,15 @@ export async function publishFormation(input: PublishInput) {
     }
     await deleteTarball(actualPath).catch(() => {});
     throw new Error(`Finalize failed: ${finalizeErr.message}`);
+  }
+
+  // Generate embedding for semantic search (best-effort — don't block publish)
+  if (isNewLatest) {
+    await refreshFormationEmbedding(
+      formationId,
+      (reefJson.description as string) ?? '',
+      readme,
+    ).catch(() => {});
   }
 
   return {
