@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import TopologyGraph from '@/components/topology-graph';
 import CopyCommand from '@/components/copy-command';
 import StarButton from '@/components/star-button';
@@ -21,7 +23,7 @@ interface ReefJson {
   type?: string;
   version?: string;
   license?: string;
-  agents?: Array<{ name: string; model?: string; role?: string }>;
+  agents?: Record<string, { model?: string; role?: string; [key: string]: unknown }> | Array<{ name: string; model?: string; role?: string }>;
   agentToAgent?: Array<{ from: string; to: string; channel?: string }>;
   variables?: Record<string, unknown>;
   cron?: Record<string, unknown> | Array<unknown>;
@@ -51,44 +53,6 @@ interface FormationDetailProps {
 
 type Tab = 'readme' | 'agents' | 'versions' | 'manifest';
 
-function renderReadme(readme: string): string {
-  // Strip HTML tags to prevent XSS — formation README could contain arbitrary content
-  const stripped = readme.replace(/<[^>]*>/g, '');
-
-  // Basic markdown-to-HTML: headings, bold, italic, code blocks, links, paragraphs
-  let html = stripped
-    // Code blocks
-    .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="rounded-lg border border-border bg-surface-2 p-4 overflow-x-auto text-sm my-4"><code>$2</code></pre>')
-    // Inline code
-    .replace(/`([^`]+)`/g, '<code class="rounded bg-surface-2 px-1.5 py-0.5 text-sm text-accent-light">$1</code>')
-    // Headings
-    .replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold mt-6 mb-2">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 class="text-xl font-semibold mt-8 mb-3">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 class="text-2xl font-bold mt-8 mb-4">$1</h1>')
-    // Bold and italic
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    // Links — validate URL and sanitize to prevent XSS via attribute breakout
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, text, url) => {
-      try {
-        const parsed = new URL(url);
-        if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:' && parsed.protocol !== 'mailto:') {
-          return text;
-        }
-        const safeUrl = encodeURI(parsed.href);
-        return `<a href="${safeUrl}" class="text-accent hover:text-accent-light underline" target="_blank" rel="noopener noreferrer">${text}</a>`;
-      } catch {
-        return text; // Invalid URL — strip the link, keep the text
-      }
-    })
-    // Line breaks (double newline = paragraph)
-    .replace(/\n\n/g, '</p><p class="my-3">')
-    // Single newlines to <br>
-    .replace(/\n/g, '<br/>');
-
-  return `<p class="my-3">${html}</p>`;
-}
-
 export default function FormationDetail({
   formation,
   readme,
@@ -97,7 +61,12 @@ export default function FormationDetail({
 }: FormationDetailProps) {
   const [activeTab, setActiveTab] = useState<Tab>('readme');
 
-  const agents = reefJson?.agents ?? [];
+  const rawAgents = reefJson?.agents;
+  const agents: Array<{ name: string; model?: string; role?: string }> = rawAgents
+    ? Array.isArray(rawAgents)
+      ? rawAgents
+      : Object.entries(rawAgents).map(([slug, cfg]) => ({ name: slug, model: cfg.model, role: cfg.role }))
+    : [];
   const edges = reefJson?.agentToAgent ?? [];
   const variableCount = reefJson?.variables ? Object.keys(reefJson.variables).length : 0;
   const cronCount = reefJson?.cron
@@ -185,10 +154,52 @@ export default function FormationDetail({
             {activeTab === 'readme' && (
               <div className="prose-invert max-w-none">
                 {readme ? (
-                  <div
-                    className="text-sm leading-relaxed text-foreground"
-                    dangerouslySetInnerHTML={{ __html: renderReadme(readme) }}
-                  />
+                  <div className="text-sm leading-relaxed text-foreground">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        h1: ({ children }) => <h1 className="text-2xl font-bold mt-8 mb-4">{children}</h1>,
+                        h2: ({ children }) => <h2 className="text-xl font-semibold mt-8 mb-3">{children}</h2>,
+                        h3: ({ children }) => <h3 className="text-lg font-semibold mt-6 mb-2">{children}</h3>,
+                        h4: ({ children }) => <h4 className="text-base font-semibold mt-4 mb-2">{children}</h4>,
+                        p: ({ children }) => <p className="my-3">{children}</p>,
+                        a: ({ href, children }) => (
+                          <a href={href} className="text-accent hover:text-accent-light underline" target="_blank" rel="noopener noreferrer">{children}</a>
+                        ),
+                        code: ({ className, children, ...props }) => {
+                          const isInline = !className;
+                          return isInline
+                            ? <code className="rounded bg-surface-2 px-1.5 py-0.5 text-sm text-accent-light">{children}</code>
+                            : <code className={className} {...props}>{children}</code>;
+                        },
+                        pre: ({ children }) => (
+                          <pre className="rounded-lg border border-border bg-surface-2 p-4 overflow-x-auto text-sm my-4">{children}</pre>
+                        ),
+                        ul: ({ children }) => <ul className="list-disc pl-6 my-3 space-y-1">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal pl-6 my-3 space-y-1">{children}</ol>,
+                        li: ({ children }) => <li className="text-sm">{children}</li>,
+                        blockquote: ({ children }) => (
+                          <blockquote className="border-l-4 border-border pl-4 my-4 text-muted italic">{children}</blockquote>
+                        ),
+                        table: ({ children }) => (
+                          <div className="overflow-x-auto my-4">
+                            <table className="min-w-full text-sm border border-border">{children}</table>
+                          </div>
+                        ),
+                        thead: ({ children }) => <thead className="bg-surface-2">{children}</thead>,
+                        th: ({ children }) => <th className="border border-border px-3 py-2 text-left font-semibold">{children}</th>,
+                        td: ({ children }) => <td className="border border-border px-3 py-2">{children}</td>,
+                        hr: () => <hr className="my-6 border-border" />,
+                        img: ({ src, alt }) => (
+                          <img src={src} alt={alt || ''} className="max-w-full rounded my-4" />
+                        ),
+                        strong: ({ children }) => <strong>{children}</strong>,
+                        em: ({ children }) => <em>{children}</em>,
+                      }}
+                    >
+                      {readme}
+                    </ReactMarkdown>
+                  </div>
                 ) : (
                   <p className="text-muted">No README provided.</p>
                 )}
