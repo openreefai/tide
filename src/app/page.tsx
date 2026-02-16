@@ -42,7 +42,7 @@ export default async function Home() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-16">
       {/* Hero */}
-      <section className="hero-atmosphere overflow-hidden rounded-2xl py-16 text-center">
+      <section className="py-16 text-center">
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
           Discover multi-agent{' '}
           <span className="text-accent">formations</span>
