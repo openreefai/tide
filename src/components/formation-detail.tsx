@@ -24,7 +24,7 @@ interface ReefJson {
   version?: string;
   license?: string;
   agents?: Record<string, { model?: string; role?: string; [key: string]: unknown }> | Array<{ name: string; model?: string; role?: string }>;
-  agentToAgent?: Array<{ from: string; to: string; channel?: string }>;
+  agentToAgent?: Record<string, string[]> | Array<{ from: string; to: string; channel?: string }>;
   variables?: Record<string, unknown>;
   cron?: Record<string, unknown> | Array<unknown>;
   [key: string]: unknown;
@@ -78,7 +78,14 @@ export default function FormationDetail({
       ? rawAgents
       : Object.entries(rawAgents).map(([slug, cfg]) => ({ name: slug, model: cfg.model, role: cfg.role }))
     : [];
-  const edges = reefJson?.agentToAgent ?? [];
+  const rawEdges = reefJson?.agentToAgent;
+  const edges: Array<{ from: string; to: string; channel?: string }> = rawEdges
+    ? Array.isArray(rawEdges)
+      ? rawEdges
+      : Object.entries(rawEdges).flatMap(([from, targets]) =>
+          (Array.isArray(targets) ? targets : []).map((to: string) => ({ from, to }))
+        )
+    : [];
   const variableCount = reefJson?.variables ? Object.keys(reefJson.variables).length : 0;
   const cronCount = reefJson?.cron
     ? Array.isArray(reefJson.cron)
