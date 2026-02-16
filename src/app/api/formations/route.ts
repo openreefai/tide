@@ -9,17 +9,16 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get('type');
   const q = searchParams.get('q');
 
-  // If semantic search is available (OPENAI_API_KEY set), use it for text queries
+  // If semantic search is available (OPENAI_API_KEY set), use it to find matching names.
+  // These names are then used as a filter in the normal query path, preserving
+  // type filtering, sort, and pagination.
+  let semanticMatchNames: string[] | null = null;
   if (q && process.env.OPENAI_API_KEY) {
     try {
       const { semanticSearch } = await import('@/lib/search');
-      const results = await semanticSearch(q, limit);
-      return NextResponse.json({
-        formations: results,
-        total: results.length,
-        page: 1,
-        limit,
-      });
+      // Fetch a generous set of matches — the normal query applies pagination later
+      const results = await semanticSearch(q, 200);
+      semanticMatchNames = results.map((r: { name: string }) => r.name);
     } catch {
       // Fall through to text search if semantic search fails
     }
@@ -31,9 +30,15 @@ export async function GET(request: NextRequest) {
     .select('id, name, description, type, license, latest_version, total_downloads, created_at, updated_at, owner_id', { count: 'exact' });
 
   if (type) query = query.eq('type', type);
-  // Sanitize q to prevent PostgREST filter injection
-  const sanitizedQ = q?.replace(/[,().%]/g, '');
-  if (sanitizedQ) query = query.or(`name.ilike.%${sanitizedQ}%,description.ilike.%${sanitizedQ}%`);
+
+  if (semanticMatchNames) {
+    // Use semantic search results as an IN filter
+    query = query.in('name', semanticMatchNames);
+  } else {
+    // Fallback: text search via ilike
+    const sanitizedQ = q?.replace(/[,().%]/g, '');
+    if (sanitizedQ) query = query.or(`name.ilike.%${sanitizedQ}%,description.ilike.%${sanitizedQ}%`);
+  }
 
   if (sort === 'stars') {
     const { data, error: rpcErr } = await supabase
@@ -45,7 +50,21 @@ export async function GET(request: NextRequest) {
       });
     if (rpcErr) return NextResponse.json({ error: rpcErr.message }, { status: 500 });
     const rows = data ?? [];
-    const total = rows.length > 0 ? Number(rows[0].total_count) : 0;
+    let total = rows.length > 0 ? Number(rows[0].total_count) : 0;
+
+    // When offset lands past the last row, the window function returns nothing.
+    // Fetch the real count so pagination UI stays correct.
+    if (rows.length === 0 && (page - 1) * limit > 0) {
+      const { data: countData } = await supabase
+        .rpc('list_formations_by_stars', {
+          p_type: type ?? null,
+          p_query: q ?? null,
+          p_limit: 1,
+          p_offset: 0,
+        });
+      total = (countData && countData.length > 0) ? Number(countData[0].total_count) : 0;
+    }
+
     return NextResponse.json({ formations: rows, total, page, limit });
   }
 

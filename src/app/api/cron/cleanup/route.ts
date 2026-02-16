@@ -3,6 +3,11 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { deleteTarball } from '@/lib/storage';
 
 export async function GET(request: NextRequest) {
+  // Fail if CRON_SECRET is not configured — never allow requests through without a secret
+  if (!process.env.CRON_SECRET) {
+    return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 });
+  }
+
   // Verify cron secret
   const authHeader = request.headers.get('authorization');
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {

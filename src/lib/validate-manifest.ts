@@ -26,9 +26,8 @@ function getValidator() {
   let schema: Record<string, unknown>;
   try {
     schema = JSON.parse(readFileSync(schemaPath, 'utf-8'));
-  } catch {
-    // Fallback: inline the essential required fields check if schema file not found
-    return null;
+  } catch (err) {
+    throw new Error(`Failed to load reef.schema.json at ${schemaPath}: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   validateFn = ajv.compile(schema);
@@ -39,29 +38,6 @@ export async function validateManifest(
   data: unknown,
 ): Promise<ManifestValidationResult> {
   const validate = getValidator();
-
-  if (!validate) {
-    // Schema file not found — do basic structural validation
-    const obj = data as Record<string, unknown>;
-    const errors: string[] = [];
-    const required = [
-      'reef',
-      'type',
-      'name',
-      'version',
-      'description',
-      'namespace',
-      'agents',
-    ];
-    for (const field of required) {
-      if (!(field in obj)) {
-        errors.push(`/ missing required property '${field}'`);
-      }
-    }
-    if (errors.length > 0) return { valid: false, errors };
-    return { valid: true, errors: [] };
-  }
-
   const valid = validate(data) as boolean;
   if (valid) return { valid: true, errors: [] };
 

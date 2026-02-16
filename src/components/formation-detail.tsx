@@ -68,12 +68,18 @@ function renderReadme(readme: string): string {
     // Bold and italic
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    // Links — only allow safe URL schemes to prevent XSS via javascript: URIs
+    // Links — validate URL and sanitize to prevent XSS via attribute breakout
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, text, url) => {
-      if (/^https?:\/\/|^mailto:/i.test(url)) {
-        return `<a href="${url}" class="text-accent hover:text-accent-light underline" target="_blank" rel="noopener noreferrer">${text}</a>`;
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:' && parsed.protocol !== 'mailto:') {
+          return text;
+        }
+        const safeUrl = encodeURI(parsed.href);
+        return `<a href="${safeUrl}" class="text-accent hover:text-accent-light underline" target="_blank" rel="noopener noreferrer">${text}</a>`;
+      } catch {
+        return text; // Invalid URL — strip the link, keep the text
       }
-      return text; // Strip the link, keep the text
     })
     // Line breaks (double newline = paragraph)
     .replace(/\n\n/g, '</p><p class="my-3">')
