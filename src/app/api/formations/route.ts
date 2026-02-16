@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
     .select('id, name, description, type, license, latest_version, total_downloads, created_at, updated_at, owner_id', { count: 'exact' });
 
   if (type) query = query.eq('type', type);
-  if (q) query = query.or(`name.ilike.%${q}%,description.ilike.%${q}%`);
+  // Sanitize q to prevent PostgREST filter injection
+  const sanitizedQ = q?.replace(/[,().%]/g, '');
+  if (sanitizedQ) query = query.or(`name.ilike.%${sanitizedQ}%,description.ilike.%${sanitizedQ}%`);
 
   if (sort === 'stars') {
     const { data, error: rpcErr } = await supabase

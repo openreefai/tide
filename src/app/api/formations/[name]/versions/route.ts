@@ -20,7 +20,7 @@ export async function GET(
 
   const { data: versions, error } = await supabase
     .from('formation_versions')
-    .select('version, published_at, tarball_sha256, tarball_size, agent_count, is_prerelease, readme')
+    .select('version, published_at, tarball_sha256, tarball_size, agent_count, is_prerelease')
     .eq('formation_id', formation.id)
     .order('published_at', { ascending: false });
 
