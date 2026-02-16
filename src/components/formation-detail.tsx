@@ -79,8 +79,11 @@ function formatDate(dateStr: string | null): string {
 }
 
 function renderReadme(readme: string): string {
+  // Strip HTML tags to prevent XSS — formation README could contain arbitrary content
+  const stripped = readme.replace(/<[^>]*>/g, '');
+
   // Basic markdown-to-HTML: headings, bold, italic, code blocks, links, paragraphs
-  let html = readme
+  let html = stripped
     // Code blocks
     .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="rounded-lg border border-border bg-surface-2 p-4 overflow-x-auto text-sm my-4"><code>$2</code></pre>')
     // Inline code

@@ -28,6 +28,7 @@ export default async function FormationPage({ params }: PageProps) {
       users(github_username, avatar_url, display_name)
     `)
     .eq('name', name)
+    .is('deleted_at', null)
     .single();
 
   if (error || !formation) {

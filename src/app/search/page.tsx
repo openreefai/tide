@@ -44,7 +44,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     }
 
     if (q) {
-      const sanitized = q.replace(/[,().%]/g, '');
+      const sanitized = q.replace(/[,().%_]/g, '');
       query = query.or(`name.ilike.%${sanitized}%,description.ilike.%${sanitized}%`);
     }
 
