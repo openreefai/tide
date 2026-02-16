@@ -13,6 +13,11 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     }),
   });
 
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`OpenAI embeddings API error (${response.status}): ${body}`);
+  }
+
   const data = await response.json();
   return data.data[0].embedding;
 }

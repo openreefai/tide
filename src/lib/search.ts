@@ -13,5 +13,9 @@ export async function semanticSearch(query: string, limit: number = 20) {
     match_count: limit,
   });
 
+  if (error) {
+    throw new Error(`Semantic search RPC failed: ${error.message}`);
+  }
+
   return data ?? [];
 }
