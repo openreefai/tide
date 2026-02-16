@@ -44,6 +44,7 @@ beforeEach(() => {
 });
 
 import { GET } from '@/app/api/formations/route';
+import { GET as GET_DETAIL } from '@/app/api/formations/[name]/route';
 
 // --- Helpers ---
 
@@ -202,5 +203,70 @@ describe('GET /api/formations', () => {
       p_limit: 20,
       p_offset: 0,
     });
+  });
+});
+
+// --- Detail route tests ---
+
+function createDetailRequest(name: string): NextRequest {
+  return new NextRequest(`http://localhost:3000/api/formations/${name}`);
+}
+
+function buildDetailParams(name: string): { params: Promise<{ name: string }> } {
+  return { params: Promise.resolve({ name }) };
+}
+
+describe('GET /api/formations/[name]', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetQueryChain();
+  });
+
+  it('returns formation detail including repository_url', async () => {
+    const formation = {
+      id: 'form-1',
+      name: 'my-formation',
+      description: 'A test formation',
+      type: 'solo',
+      license: 'MIT',
+      homepage_url: null,
+      repository_url: 'https://github.com/openreefai/my-formation',
+      latest_version: '1.0.0',
+      total_downloads: 42,
+      created_at: '2025-01-01T00:00:00Z',
+      updated_at: '2025-01-01T00:00:00Z',
+      owner_id: 'user-1',
+      users: { github_username: 'testuser', avatar_url: null, display_name: 'Test User' },
+    };
+
+    // Detail route chain: .from('formations').select(...).eq('name', ...).single()
+    const mockDetailSingle = vi.fn().mockResolvedValue({ data: formation, error: null });
+    const mockDetailEq = vi.fn().mockReturnValue({ single: mockDetailSingle });
+    const mockDetailSelect = vi.fn().mockReturnValue({ eq: mockDetailEq });
+
+    // Stars count chain: .from('stars').select('*', opts).eq('formation_id', ...)
+    // The final result is awaited directly and { count } is read off it.
+    const mockStarsEq = vi.fn().mockResolvedValue({ count: 5 });
+    const mockStarsSelect = vi.fn().mockReturnValue({ eq: mockStarsEq });
+
+    // Override the supabase client for this test
+    const { createServerSupabaseClient } = await import('@/lib/supabase/server');
+    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockResolvedValue({
+      from: vi.fn((table: string) => {
+        if (table === 'stars') return { select: mockStarsSelect };
+        return { select: mockDetailSelect };
+      }),
+    });
+
+    const response = await GET_DETAIL(
+      createDetailRequest('my-formation'),
+      buildDetailParams('my-formation'),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.name).toBe('my-formation');
+    expect(body.repository_url).toBe('https://github.com/openreefai/my-formation');
+    expect(body.stars).toBe(5);
   });
 });

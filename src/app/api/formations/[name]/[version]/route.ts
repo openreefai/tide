@@ -72,7 +72,7 @@ export async function DELETE(
     const remainingVersions = publishedVersions.filter((v) => v.version !== version);
     const newLatest = computeLatestVersion(remainingVersions);
 
-    let newLatestMeta: { description: string; type: string; license: string | null } | null = null;
+    let newLatestMeta: { description: string; type: string; license: string | null; repository_url: string | null } | null = null;
     if (newLatest) {
       const { data: latestRow } = await admin
         .from('formation_versions')
@@ -86,6 +86,7 @@ export async function DELETE(
           description: (rj.description as string) ?? '',
           type: (rj.type as string) ?? 'solo',
           license: (rj.license as string) ?? null,
+          repository_url: (rj.repository as string) ?? null,
         };
       }
     }
@@ -98,6 +99,7 @@ export async function DELETE(
       p_new_latest_description: newLatestMeta?.description ?? null,
       p_new_latest_type: newLatestMeta?.type ?? null,
       p_new_latest_license: newLatestMeta?.license ?? null,
+      p_repository_url: newLatestMeta?.repository_url ?? null,
     });
 
     if (result.error?.message?.includes('CONCURRENT_MODIFY') && attempt < 2) {

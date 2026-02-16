@@ -219,4 +219,34 @@ describe('POST /api/formations/[name]/publish', () => {
       tarball: expect.any(Buffer),
     });
   });
+
+  it('passes tarball containing repository field through to publishFormation', async () => {
+    mockVerifyToken.mockResolvedValue({ userId: 'user-1', tokenId: 'tok-1' });
+    mockPublishFormation.mockResolvedValue({
+      ok: true,
+      name: 'repo-formation',
+      version: '2.0.0',
+      url: 'https://tide.openreef.ai/formations/repo-formation',
+    });
+
+    // Simulate a tarball whose reef.json includes a repository field.
+    // The route handler passes the raw tarball to publishFormation;
+    // publishFormation extracts reef.json and wires repository to RPCs.
+    const tarballData = Buffer.from('tarball-with-repository');
+    const request = withFormData(
+      createRequest('repo-formation', 'reef_tok_valid'),
+      tarballData,
+    );
+    const response = await POST(request, buildParams('repo-formation'));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.name).toBe('repo-formation');
+    expect(mockPublishFormation).toHaveBeenCalledWith({
+      userId: 'user-1',
+      name: 'repo-formation',
+      tarball: expect.any(Buffer),
+    });
+  });
 });

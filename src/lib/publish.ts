@@ -78,6 +78,7 @@ export async function publishFormation(input: PublishInput) {
     p_description: (reefJson.description as string) ?? '',
     p_type: (reefJson.type as string) ?? 'solo',
     p_license: (reefJson.license as string) ?? null,
+    p_repository_url: (reefJson.repository as string) ?? null,
     p_version: version,
     p_readme: readme,
     p_reef_json: reefJson,
@@ -130,6 +131,7 @@ export async function publishFormation(input: PublishInput) {
         p_description: isNewLatest ? ((reefJson.description as string) ?? '') : null,
         p_type: isNewLatest ? ((reefJson.type as string) ?? 'solo') : null,
         p_license: isNewLatest ? ((reefJson.license as string) ?? null) : null,
+        p_repository_url: isNewLatest ? ((reefJson.repository as string) ?? null) : null,
       });
 
       if (result.error?.message?.includes('CONCURRENT_MODIFY') && attempt < 2) {

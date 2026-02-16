@@ -62,7 +62,7 @@ npm run dev
 
 ### Database migrations
 
-11 migrations in `supabase/migrations/`:
+13 migrations in `supabase/migrations/`:
 
 | Migration | Purpose |
 |-----------|---------|
@@ -77,6 +77,8 @@ npm run dev
 | 009 | RLS on formation_embeddings |
 | 010 | Security hardening: REVOKE/GRANT on RPCs, in-function JWT guards |
 | 011 | Semantic search support in star-sorted listings |
+| 012 | Harden user trigger (multi-key fallback, ON CONFLICT, exception handler) |
+| 013 | Wire repository_url through publish_claim, publish_finalize, and unpublish_version RPCs |
 
 ### Deploy to production
 
@@ -111,7 +113,7 @@ Browser / CLI
 ## Tests
 
 ```bash
-npm test          # 47 tests across 7 files
+npm test          # 54 tests across 8 files
 npm run test:watch
 ```
 
@@ -120,11 +122,13 @@ npm run test:watch
 Tide is the default registry for the [OpenReef CLI](https://github.com/openreefai/openreef):
 
 ```bash
-reef publish              # Publish a formation
-reef install <name>       # Install latest version
-reef install <name>@1.2   # Install specific version or range
-reef search <query>       # Search the registry
-reef token                # Open dashboard to manage API tokens
+reef login               # Authenticate with Tide (alias: reef token)
+reef logout              # Remove stored credentials
+reef whoami              # Check login status
+reef publish             # Publish a formation
+reef install <name>      # Install latest version
+reef install <name>@1.2  # Install specific version or range
+reef search <query>      # Search the registry
 ```
 
 ## License
