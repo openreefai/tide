@@ -1,7 +1,8 @@
 import Ajv2020 from 'ajv/dist/2020';
 import addFormats from 'ajv-formats';
 import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 
 export interface ManifestValidationResult {
   valid: boolean;
@@ -17,11 +18,10 @@ function getValidator() {
   const ajv = new Ajv2020({ allErrors: true, strict: false });
   addFormats(ajv);
 
-  // Load the reef.schema.json from the openreef packages directory
-  const schemaPath = resolve(
-    process.cwd(),
-    '../openreef/packages/schema/reef.schema.json',
-  );
+  // Load the reef.schema.json bundled alongside this file
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  const schemaPath = resolve(__dirname, 'reef.schema.json');
 
   let schema: Record<string, unknown>;
   try {
