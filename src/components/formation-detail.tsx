@@ -302,7 +302,7 @@ export default function FormationDetail({
 
             <div>
               <div className="text-xs font-medium uppercase tracking-wider text-muted">Downloads</div>
-              <div className="mt-1 text-sm font-mono">{formation.total_downloads.toLocaleString()}</div>
+              <div className="mt-1 text-sm font-mono">{formation.total_downloads.toLocaleString('en-US')}</div>
             </div>
 
             {formation.repository_url && (
