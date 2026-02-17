@@ -22,7 +22,7 @@ export default function CopyCommand({ command }: CopyCommandProps) {
 
   return (
     <div className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2.5">
-      <code className="flex-1 text-sm text-accent-light">$ {command}</code>
+      <code className="cmd-prompt flex-1 text-sm text-accent-light">{command}</code>
       <button
         onClick={handleCopy}
         className="relative shrink-0 rounded p-1.5 text-muted hover:bg-surface-2 hover:text-foreground transition-colors"

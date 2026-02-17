@@ -85,6 +85,13 @@ code, pre, .font-mono {
   outline: none;
 }
 
+/* Non-selectable command prompt */
+.cmd-prompt::before {
+  content: '$ ';
+  user-select: none;
+  color: var(--muted);
+}
+
 /* Brand gradient text */
 .text-gradient-brand {
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 50%, var(--warm) 100%);

@@ -79,8 +79,8 @@ export default async function Home() {
 
         {/* Install example */}
         <div className="mx-auto mt-6 max-w-xs">
-          <code className="block rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-accent-light">
-            $ reef install daily-ops
+          <code className="cmd-prompt block rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-accent-light">
+            reef install daily-ops
           </code>
         </div>
       </section>
